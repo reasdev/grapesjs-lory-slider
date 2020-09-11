@@ -59,7 +59,7 @@ export default grapesjs.plugins.add('grapesjs-lory-slider', (editor, opts = {}) 
     classNext: 'gjs-lory-next',
 
     // Script to load dynamically in case no lory instance was found
-    script: 'https://cdnjs.cloudflare.com/ajax/libs/lory.js/2.3.4/lory.min.js',
+    script: 'https://cdnjs.cloudflare.com/ajax/libs/lory.js/2.5.3/lory.min.js',
 
   },  ...opts };
 

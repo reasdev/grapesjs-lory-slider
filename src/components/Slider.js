@@ -1,7 +1,67 @@
-import constants from '../constants';
+import constants from "../constants";
+
+const styles = `
+.gjs-lory-frame {
+  width: 300px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.gjs-lory-slide {
+  width: 300px;
+  display: inline-block;
+  position: relative;
+  margin-right: 10px;
+  vertical-align: top;
+  min-height: 150px;
+  white-space: normal;
+}
+
+.gjs-lory-prev, .gjs-lory-next {
+  position: absolute;
+  display: block;
+  cursor: pointer;
+  width: 50px;
+  height: 50px;
+  bottom: -70px;
+}
+
+.gjs-lory-prev {
+  left: 50%;
+  margin-left: -55px;
+}
+
+.gjs-lory-next {
+  right: 50%;
+  margin-right: -55px;
+}
+
+@media screen and (min-width: 768px) {
+  .gjs-lory-frame, .gjs-lory-slide {
+    width: 580px;
+  }
+  .gjs-lory-prev, .gjs-lory-next {
+    top: 50%;
+    bottom: auto;
+    margin: -25px 0 0;
+  }
+  .gjs-lory-prev {
+    left: 0;
+  }
+  .gjs-lory-next {
+    right: 0;
+  }
+}
+@media screen and (min-width: 992px) {
+  .gjs-lory-frame, .gjs-lory-slide {
+    width: 880px;
+  }
+}`;
 
 export default (dc, config = {}) => {
-  const defaultType = dc.getType('default');
+  const defaultType = dc.getType("default");
   const defaultModel = defaultType.model;
   const defaultView = defaultType.view;
   const {
@@ -17,150 +77,163 @@ export default (dc, config = {}) => {
     nextId,
     frameId,
     slidesId,
-    slideId
+    slideId,
   } = constants;
 
   dc.addType(sliderName, {
+    model: defaultModel.extend(
+      {
+        defaults: {
+          ...defaultModel.prototype.defaults,
 
-    model: defaultModel.extend({
-      defaults: {
-        ...defaultModel.prototype.defaults,
+          name: "Slider",
 
-        name: 'Slider',
+          // Slides scrolled at once
+          "slides-to-scroll": 1,
 
-        // Slides scrolled at once
-        'slides-to-scroll': 1,
+          // Enabled mouse events
+          "enable-mouse-events": false,
 
-        // Enabled mouse events
-        'enable-mouse-events': false,
+          // Time in milliseconds for the animation of a valid slide attempt
+          "slide-speed": 300,
 
-        // Time in milliseconds for the animation of a valid slide attempt
-        'slide-speed': 300,
+          // Time in milliseconds for the animation of the rewind after the last slide
+          "rewind-speed": 600,
 
-        // Time in milliseconds for the animation of the rewind after the last slide
-        'rewind-speed': 600,
+          // Time for the snapBack of the slider if the slide attempt was not valid
+          "snap-back-speed": 200,
 
-        // Time for the snapBack of the slider if the slide attempt was not valid
-        'snap-back-speed': 200,
+          // Like carousel, works with multiple slides. (do not combine with rewind)
+          infinite: false,
 
-        // Like carousel, works with multiple slides. (do not combine with rewind)
-        infinite: false,
+          // If slider reached the last slide, with next click the slider goes
+          // back to the startindex. (do not combine with infinite)
+          rewind: false,
 
-        // If slider reached the last slide, with next click the slider goes
-        // back to the startindex. (do not combine with infinite)
-        rewind: false,
+          // Cubic bezier easing functions: http://easings.net/de
+          ease: "ease",
 
-        // Cubic bezier easing functions: http://easings.net/de
-        ease: 'ease',
+          droppable: `${prevSelector}, ${nextSelector}`,
 
-        droppable: `${prevSelector}, ${nextSelector}`,
+          style: {
+            position: "relative",
+            width: "100%",
+            margin: "0 auto 70px",
+          },
 
-        style: {
-          position: 'relative',
-          width: '980px',
-          margin: '0 auto',
+          traits: [
+            {
+              type: "checkbox",
+              label: "Infinite",
+              name: "infinite",
+              changeProp: 1,
+            },
+            {
+              type: "checkbox",
+              label: "Rewind",
+              name: "rewind",
+              changeProp: 1,
+            },
+            {
+              type: "number",
+              label: "Slide speed",
+              name: "slide-speed",
+              changeProp: 1,
+            },
+            {
+              type: "number",
+              label: "Rewind speed",
+              name: "rewind-speed",
+              changeProp: 1,
+            },
+            {
+              type: "number",
+              label: "Slides to scroll",
+              name: "slides-to-scroll",
+              changeProp: 1,
+            },
+            {
+              type: "select",
+              label: "Timing",
+              name: "ease",
+              changeProp: 1,
+              options: ["ease", "linear", "ease-in", "ease-out", "ease-in-out"],
+            },
+          ],
+
+          "script-deps": config.script,
+          "class-frame": config.classFrame,
+          "class-slides": config.classSlides,
+          "class-prev": config.classPrev,
+          "class-next": config.classNext,
+
+          script() {
+            var el = this;
+            var deps = "{[ script-deps ]}";
+            var falsies = ["0", "false"];
+            var infinite = "{[ infinite ]}";
+            infinite = infinite == "true" ? 1 : parseInt(infinite, 10);
+            var options = {
+              slidesToScroll: parseInt("{[ slides-to-scroll ]}", 10),
+              enableMouseEvents:
+                falsies.indexOf("{[ enable-mouse-events ]}") >= 0 ? 0 : 1,
+              infinite: isNaN(infinite) ? false : infinite,
+              rewind: falsies.indexOf("{[ rewind ]}") >= 0 ? false : true,
+              slideSpeed: parseInt("{[ slide-speed ]}", 10),
+              rewindSpeed: parseInt("{[ rewind-speed ]}", 10),
+              snapBackSpeed: parseInt("{[ snap-back-speed ]}", 10),
+              ease: "{[ ease ]}",
+              classNameFrame: "{[ class-frame ]}",
+              classNameSlideContainer: "{[ class-slides ]}",
+              classNamePrevCtrl: "{[ class-prev ]}",
+              classNameNextCtrl: "{[ class-next ]}",
+            };
+
+            var initSlider = function () {
+              window.sliderLory = lory(el, options);
+            };
+
+            if (deps && typeof lory == "undefined") {
+              var script = document.createElement("script");
+              script.src = deps;
+              script.onload = initSlider;
+              document.head.appendChild(script);
+            } else {
+              initSlider();
+            }
+          },
+          ...config.sliderProps,
         },
-
-        traits: [{
-          type: 'checkbox',
-          label: 'Infinite',
-          name: 'infinite',
-          changeProp: 1,
-        },{
-          type: 'checkbox',
-          label: 'Rewind',
-          name: 'rewind',
-          changeProp: 1,
-        },{
-          type: 'number',
-          label: 'Slide speed',
-          name: 'slide-speed',
-          changeProp: 1,
-        },{
-          type: 'number',
-          label: 'Rewind speed',
-          name: 'rewind-speed',
-          changeProp: 1,
-        }, {
-          type: 'number',
-          label: 'Slides to scroll',
-          name: 'slides-to-scroll',
-          changeProp: 1,
-        }, {
-          type: 'select',
-          label: 'Timing',
-          name: 'ease',
-          changeProp: 1,
-          options: [
-            'ease',
-            'linear',
-            'ease-in',
-            'ease-out',
-            'ease-in-out'
-          ]
-        }],
-
-        'script-deps': config.script,
-        'class-frame': config.classFrame,
-        'class-slides': config.classSlides,
-        'class-prev': config.classPrev,
-        'class-next': config.classNext,
-
-        script() {
-          var el = this;
-          var deps = '{[ script-deps ]}';
-          var falsies = ['0', 'false'];
-          var infinite = '{[ infinite ]}';
-          infinite = infinite == 'true' ? 1 : parseInt(infinite, 10);
-          var options = {
-            slidesToScroll: parseInt('{[ slides-to-scroll ]}', 10),
-            enableMouseEvents: falsies.indexOf('{[ enable-mouse-events ]}') >= 0 ? 0 : 1,
-            infinite: isNaN(infinite) ? false : infinite,
-            rewind: falsies.indexOf('{[ rewind ]}') >= 0 ? false : true,
-            slideSpeed: parseInt('{[ slide-speed ]}', 10),
-            rewindSpeed: parseInt('{[ rewind-speed ]}', 10),
-            snapBackSpeed: parseInt('{[ snap-back-speed ]}', 10),
-            ease: '{[ ease ]}',
-            classNameFrame: '{[ class-frame ]}',
-            classNameSlideContainer: '{[ class-slides ]}',
-            classNamePrevCtrl: '{[ class-prev ]}',
-            classNameNextCtrl: '{[ class-next ]}',
-          };
-
-          var initSlider = function() {
-            window.sliderLory = lory(el, options);
-          };
-
-          if (deps && typeof lory == 'undefined') {
-            var script = document.createElement('script');
-            script.src = deps;
-            script.onload = initSlider;
-            document.head.appendChild(script);
-          } else {
-            initSlider();
+      },
+      {
+        isComponent(el) {
+          if (el.hasAttribute && el.hasAttribute(sliderId)) {
+            return { type: sliderName };
           }
         },
-        ...config.sliderProps
-      },
-    }, {
-      isComponent(el) {
-        if (el.hasAttribute && el.hasAttribute(sliderId)) {
-          return { type: sliderName };
-        }
-      },
-    }),
+      }
+    ),
 
     view: defaultView.extend({
       init() {
-        const props = ['slides-to-scroll', 'enable-mouse-events', 'slide-speed',
-          'rewind-speed', 'snap-back-speed', 'infinite', 'rewind', 'ease'];
-        const reactTo = props.map(prop => `change:${prop}`).join(' ');
+        const props = [
+          "slides-to-scroll",
+          "enable-mouse-events",
+          "slide-speed",
+          "rewind-speed",
+          "snap-back-speed",
+          "infinite",
+          "rewind",
+          "ease",
+        ];
+        const reactTo = props.map((prop) => `change:${prop}`).join(" ");
         this.listenTo(this.model, reactTo, this.render);
         const comps = this.model.components();
 
         // Add a basic template if it's not yet initialized
         if (!comps.length) {
-          comps.add(`<div data-gjs-type="${frameName}">
+          comps.add(`<style>${styles}</style>
+          <div data-gjs-type="${frameName}">
               <div data-gjs-type="${slidesName}">${config.slideEls}</div>
           </div>
           <span data-gjs-type="${prevName}">${config.prevEl}</span>
@@ -169,4 +242,4 @@ export default (dc, config = {}) => {
       },
     }),
   });
-}
+};
